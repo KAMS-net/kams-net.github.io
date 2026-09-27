@@ -314,7 +314,7 @@
         <p class="note">We will never ask for your seed phrase or private key.</p>
     </section>
 
-   <script>
+ <script>
     const tg = window.Telegram.WebApp;
 
     tg.expand();
@@ -366,9 +366,9 @@
             action: action
         };
 
-        // =========================
+        // ==========================================
         // TRENDING / VOLUME
-        // =========================
+        // ==========================================
 
         if (action === 'trending' || action === 'volume') {
 
@@ -412,9 +412,9 @@
 
         haptic();
 
-        // =========================
+        // ==========================================
         // SEND TO SUPABASE
-        // =========================
+        // ==========================================
 
         try {
 
@@ -426,14 +426,17 @@
                     headers: {
                         'Content-Type': 'application/json',
 
-                        // PON TU ANON KEY AQUÍ
-                        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFrYmFvc2Jvenhnb3R0ZXpremNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1MjI3MjksImV4cCI6MjEwNjA5ODcyOX0.oDO0NNKoYTM5X_wr4ldsFixtDFRIJWU6Lo17u7mngBg'
+                        // TU ANON KEY DE SUPABASE
+                        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFrYmFvc2Jvenhnb3R0ZXpremNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1MjI3MjksImV4cCI6MjEwNjA5ODcyOX0.oDO0NNKoYTM5X_wr4ldsFixtDFRIJWU6Lo17u7mngBg',
+
+                        // MISMA ANON KEY
+                        'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFrYmFvc2Jvenhnb3R0ZXpremNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1MjI3MjksImV4cCI6MjEwNjA5ODcyOX0.oDO0NNKoYTM5X_wr4ldsFixtDFRIJWU6Lo17u7mngBg'
                     },
 
                     body: JSON.stringify({
                         ...payload,
 
-                        // Identifica al usuario de Telegram
+                        // Datos de la Mini App de Telegram
                         telegram_init_data: tg.initData
                     })
                 }
@@ -451,6 +454,10 @@
                 responseText
             );
 
+            // ==========================================
+            // ERROR
+            // ==========================================
+
             if (!response.ok) {
 
                 tg.showAlert(
@@ -462,6 +469,10 @@
 
                 return;
             }
+
+            // ==========================================
+            // SUCCESS
+            // ==========================================
 
             tg.showAlert(
                 'Order sent successfully.'
