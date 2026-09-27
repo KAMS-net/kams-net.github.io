@@ -318,7 +318,6 @@
     const tg = window.Telegram.WebApp;
 
     tg.expand();
-    tg.BackButton.onClick(goBack);
 
     function haptic() {
         if (tg.HapticFeedback) {
@@ -327,11 +326,15 @@
     }
 
     function showView(id) {
-        document.querySelectorAll('.view').forEach(v => {
+        document.querySelectorAll('.view').forEach(function(v) {
             v.classList.remove('active');
         });
 
-        document.getElementById('view-' + id).classList.add('active');
+        const view = document.getElementById('view-' + id);
+
+        if (view) {
+            view.classList.add('active');
+        }
 
         window.scrollTo(0, 0);
     }
@@ -339,12 +342,22 @@
     function openView(id) {
         haptic();
         showView(id);
-        tg.BackButton.show();
+
+        if (tg.BackButton) {
+            tg.BackButton.show();
+        }
     }
 
     function goBack() {
         showView('menu');
-        tg.BackButton.hide();
+
+        if (tg.BackButton) {
+            tg.BackButton.hide();
+        }
+    }
+
+    if (tg.BackButton) {
+        tg.BackButton.onClick(goBack);
     }
 
     async function submitAction(action) {
@@ -353,22 +366,20 @@
             action: action
         };
 
-        // ==========================================
-        // TRENDING / VOLUME
-        // ==========================================
-
         if (action === 'trending' || action === 'volume') {
 
-            const input = document.getElementById(action + '-ca');
+            const input = document.getElementById(
+                action + '-ca'
+            );
 
             if (!input) {
-                tg.showAlert('ERROR: input not found');
+                tg.showAlert('Input not found.');
                 return;
             }
 
             const ca = input.value.trim();
 
-            if (ca === '') {
+            if (!ca) {
                 tg.showAlert(
                     'Please paste your token contract address.'
                 );
@@ -379,25 +390,23 @@
 
             if (action === 'trending') {
 
-                payload.duration =
-                    document.getElementById(
-                        'trending-duration'
-                    ).value;
+                const duration = document.getElementById(
+                    'trending-duration'
+                );
+
+                payload.duration = duration.value;
 
             } else {
 
-                payload.package =
-                    document.getElementById(
-                        'volume-package'
-                    ).value;
+                const volumePackage = document.getElementById(
+                    'volume-package'
+                );
+
+                payload.package = volumePackage.value;
             }
         }
 
         haptic();
-
-        // ==========================================
-        // SEND TO SUPABASE
-        // ==========================================
 
         try {
 
@@ -417,51 +426,29 @@
                 }
             );
 
-            console.log(
-                'SUPABASE HTTP STATUS:',
-                response.status
-            );
+            const text = await response.text();
 
-            const responseText = await response.text();
-
-            console.log(
-                'SUPABASE RESPONSE:',
-                responseText
-            );
-
-            // ==========================================
-            // ERROR FROM SUPABASE
-            // ==========================================
+            console.log('STATUS:', response.status);
+            console.log('RESPONSE:', text);
 
             if (!response.ok) {
-
                 tg.showAlert(
                     'SERVER ERROR ' +
                     response.status +
-                    ':\n\n' +
-                    responseText.substring(0, 500)
+                    '\n\n' +
+                    text.substring(0, 500)
                 );
-
                 return;
             }
 
-            // ==========================================
-            // SUCCESS
-            // ==========================================
-
-            tg.showAlert(
-                'Order sent successfully.'
-            );
+            tg.showAlert('Order sent successfully.');
 
         } catch (error) {
 
-            console.error(
-                'FETCH ERROR:',
-                error
-            );
+            console.error('FETCH ERROR:', error);
 
             tg.showAlert(
-                'FETCH ERROR:\n\n' +
+                'FETCH ERROR\n\n' +
                 error.message
             );
         }
