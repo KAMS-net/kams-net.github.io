@@ -319,6 +319,10 @@
 
     tg.expand();
 
+    if (tg.BackButton) {
+        tg.BackButton.onClick(goBack);
+    }
+
     function haptic() {
         if (tg.HapticFeedback) {
             tg.HapticFeedback.impactOccurred('light');
@@ -356,15 +360,15 @@
         }
     }
 
-    if (tg.BackButton) {
-        tg.BackButton.onClick(goBack);
-    }
-
     async function submitAction(action) {
 
         const payload = {
             action: action
         };
+
+        // =========================
+        // TRENDING / VOLUME
+        // =========================
 
         if (action === 'trending' || action === 'volume') {
 
@@ -379,7 +383,7 @@
 
             const ca = input.value.trim();
 
-            if (!ca) {
+            if (ca === '') {
                 tg.showAlert(
                     'Please paste your token contract address.'
                 );
@@ -408,6 +412,10 @@
 
         haptic();
 
+        // =========================
+        // SEND TO SUPABASE
+        // =========================
+
         try {
 
             const response = await fetch(
@@ -416,36 +424,55 @@
                     method: 'POST',
 
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+
+                        // PON TU ANON KEY AQUÍ
+                        'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFrYmFvc2Jvenhnb3R0ZXpremNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1MjI3MjksImV4cCI6MjEwNjA5ODcyOX0.oDO0NNKoYTM5X_wr4ldsFixtDFRIJWU6Lo17u7mngBg'
                     },
 
                     body: JSON.stringify({
                         ...payload,
+
+                        // Identifica al usuario de Telegram
                         telegram_init_data: tg.initData
                     })
                 }
             );
 
-            const text = await response.text();
+            console.log(
+                'HTTP STATUS:',
+                response.status
+            );
 
-            console.log('STATUS:', response.status);
-            console.log('RESPONSE:', text);
+            const responseText = await response.text();
+
+            console.log(
+                'SUPABASE RESPONSE:',
+                responseText
+            );
 
             if (!response.ok) {
+
                 tg.showAlert(
                     'SERVER ERROR ' +
                     response.status +
                     '\n\n' +
-                    text.substring(0, 500)
+                    responseText.substring(0, 500)
                 );
+
                 return;
             }
 
-            tg.showAlert('Order sent successfully.');
+            tg.showAlert(
+                'Order sent successfully.'
+            );
 
         } catch (error) {
 
-            console.error('FETCH ERROR:', error);
+            console.error(
+                'FETCH ERROR:',
+                error
+            );
 
             tg.showAlert(
                 'FETCH ERROR\n\n' +
