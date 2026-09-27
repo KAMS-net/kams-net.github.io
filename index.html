@@ -200,7 +200,7 @@
                     <path d="M12 26 a8 8 0 0 1 8 -6" fill="none" stroke="#0b0c10" stroke-width="3" stroke-linecap="round" opacity="0.35"/>
                 </g>
             </svg>
-            <h2>Main Menu</h2>
+            <h2>Pump.fun Trending</h2>
         </div>
 
         <div class="menu-grid">
@@ -314,55 +314,103 @@
         <p class="note">We will never ask for your seed phrase or private key.</p>
     </section>
 
-    <script>
-        const tg = window.Telegram.WebApp;
+   <script>
+    const tg = window.Telegram.WebApp;
 
-        tg.expand();
-        tg.BackButton.onClick(goBack);
+    tg.expand();
+    tg.BackButton.onClick(goBack);
 
-        function haptic() {
-            if (tg.HapticFeedback) {
-                tg.HapticFeedback.impactOccurred('light');
+    function haptic() {
+        if (tg.HapticFeedback) {
+            tg.HapticFeedback.impactOccurred('light');
+        }
+    }
+
+    function showView(id) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById('view-' + id).classList.add('active');
+        window.scrollTo(0, 0);
+    }
+
+    function openView(id) {
+        haptic();
+        showView(id);
+        tg.BackButton.show();
+    }
+
+    function goBack() {
+        showView('menu');
+        tg.BackButton.hide();
+    }
+
+    async function submitAction(action) {
+
+        const payload = { action };
+
+        if (action === 'trending' || action === 'volume') {
+
+            const ca = document
+                .getElementById(action + '-ca')
+                .value
+                .trim();
+
+            if (ca === '') {
+                tg.showAlert('Please paste your token contract address.');
+                return;
+            }
+
+            payload.contract = ca;
+
+            if (action === 'trending') {
+
+                payload.duration =
+                    document.getElementById('trending-duration').value;
+
+            } else {
+
+                payload.package =
+                    document.getElementById('volume-package').value;
             }
         }
 
-        function showView(id) {
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.getElementById('view-' + id).classList.add('active');
-            window.scrollTo(0, 0);
-        }
+        haptic();
 
-        function openView(id) {
-            haptic();
-            showView(id);
-            tg.BackButton.show();
-        }
+        try {
 
-        function goBack() {
-            showView('menu');
-            tg.BackButton.hide();
-        }
+            const response = await fetch(
+                'https://akbaosbozxgottezkzcr.supabase.co/functions/v1/send-telegram',
+                {
+                    method: 'POST',
 
-        function submitAction(action) {
-            const payload = { action };
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
 
-            if (action === 'trending' || action === 'volume') {
-                const ca = document.getElementById(action + '-ca').value.trim();
-                if (ca === '') {
-                    tg.showAlert('Please paste your token contract address.');
-                    return;
+                    body: JSON.stringify({
+                        ...payload,
+
+                        telegram_init_data: tg.initData
+                    })
                 }
-                payload.contract = ca;
-                if (action === 'trending') {
-                    payload.duration = document.getElementById('trending-duration').value;
-                } else {
-                    payload.package = document.getElementById('volume-package').value;
-                }
+            );
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Error sending request');
             }
 
-            haptic();
-            tg.sendData(JSON.stringify(payload));
+            tg.showAlert('Order sent successfully.');
+
+        } catch (error) {
+
+            console.error(error);
+
+            tg.showAlert(
+                'Could not send the order. Please try again.'
+            );
         }
-    </script>
+    }
+</script>
 </body>
 </html>
