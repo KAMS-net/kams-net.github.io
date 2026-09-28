@@ -780,6 +780,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow: hidden;
             transition: opacity 0.6s ease, visibility 0.6s ease;
         }
 
@@ -789,8 +790,8 @@
             height: auto;
             object-fit: contain;
             pointer-events: none;
-            /* Blend the video's black background into the page background */
-            mix-blend-mode: lighten;
+            /* Move the video up from the centre */
+            transform: translateY(-8vh) scale(1.21);
         }
 
         .loader.done {
@@ -1015,7 +1016,7 @@
 
     <!-- Loading screen -->
     <div class="loader" id="loader">
-        <video id="loader-video" src="155726190d2d4a44842af57040102923.mp4" autoplay muted playsinline preload="auto"></video>
+        <video id="loader-video" src="pump_fun_intro.mp4" autoplay muted playsinline preload="auto"></video>
     </div>
 
     <!-- Main menu -->
